@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goodday Admin Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; width: 16px; height: 16px; display: inline-block; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-gray-800 antialiased">
+
+    <div id="login-page" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white max-w-md w-full rounded-2xl shadow-xl overflow-hidden">
+            <div class="bg-indigo-600 p-8 text-center">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-white text-3xl mx-auto mb-4 backdrop-blur-sm">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white">Goodday Admin</h1>
+                <p class="text-indigo-200 text-sm mt-1">เข้าสู่ระบบสำหรับเจ้าหน้าที่โครงการ</p>
+            </div>
+            <div class="p-8">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 mb-1 block">อีเมลเจ้าหน้าที่</label>
+                        <input type="email" id="login-email" class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-indigo-500 outline-none" placeholder="admin@goodday.com">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 mb-1 block">รหัสผ่าน</label>
+                        <input type="password" id="login-pass" class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-indigo-500 outline-none" placeholder="••••••••">
+                    </div>
+                    <div id="login-error" class="bg-red-50 text-red-600 text-xs p-3 rounded-lg text-center font-bold hidden"></div>
+                    <button onclick="doLogin(this)" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl font-bold shadow-md transition mt-2">
+                        เข้าสู่ระบบ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard-page" class="hidden min-h-screen flex flex-col">
+        <nav class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-seedling text-xl mr-2 text-green-300"></i>
+                        <span class="font-bold text-lg tracking-wide">Goodday Portal</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right hidden sm:block">
+                            <p id="staff-name" class="text-sm font-bold leading-tight">-</p>
+                            <p id="staff-role" class="text-[10px] text-indigo-200">-</p>
+                        </div>
+                        <button onclick="doLogout()" class="bg-indigo-800 hover:bg-indigo-900 px-4 py-2 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-right-from-bracket mr-1"></i> ออกจากระบบ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+            
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-black text-gray-800">รายชื่อผู้เข้าร่วมโครงการ</h2>
+                    <p class="text-sm text-gray-500 mt-1">แสดงข้อมูลตามสิทธิ์การดูแลของคุณ</p>
+                </div>
+                <div class="relative max-w-sm w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-search text-gray-400"></i>
+                    </div>
+                    <input type="text" id="search-input" onkeyup="filterTable()" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 sm:text-sm" placeholder="ค้นหาชื่อ, เบอร์โทร, หรือรหัสสมาชิก...">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center text-xl"><i class="fa-solid fa-users"></i></div>
+                    <div><p class="text-xs text-gray-500 font-bold uppercase">สมาชิกที่ดูแลทั้งหมด</p><h3 id="stat-total" class="text-2xl font-black text-gray-800">0</h3></div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center text-xl"><i class="fa-solid fa-leaf"></i></div>
+                    <div><p class="text-xs text-gray-500 font-bold uppercase">เข้าร่วม Well Well Well!</p><h3 id="stat-www" class="text-2xl font-black text-gray-800">0</h3></div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center text-xl"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <div><p class="text-xs text-gray-500 font-bold uppercase">รอตั้งเป้าหมาย</p><h3 id="stat-pending" class="text-2xl font-black text-gray-800">0</h3></div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow-md rounded-2xl overflow-hidden border border-gray-200">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Member ID</th>
+                                <th class="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>
+                                <th class="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-wider">เบอร์โทรศัพท์</th>
+                                <th class="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-wider">จังหวัด</th>
+                                <th class="px-6 py-4 text-center text-xs font-black text-gray-500 uppercase tracking-wider">สถานะ WWW</th>
+                                <th class="px-6 py-4 text-center text-xs font-black text-gray-500 uppercase tracking-wider">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="member-table-body" class="bg-white divide-y divide-gray-100">
+                            <tr><td colspan="6" class="px-6 py-10 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-indigo-500 mb-2 block"></i> กำลังโหลดข้อมูล...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 🚨🚨🚨 เปลี่ยน URL ตรงนี้เป็น URL ของ Web App ใหม่ของระบบหลังบ้าน 🚨🚨🚨
+        const API_URL = "ใส่_URL_ของ_APPS_SCRIPT_ตรงนี้"; 
+        
+        let currentStaff = null;
+        let allMembersData = [];
+
+        // เช็คว่าเคยล็อคอินค้างไว้ไหม
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedStaff = localStorage.getItem('gooddayAdminSession');
+            if (savedStaff) {
+                currentStaff = JSON.parse(savedStaff);
+                showDashboard();
+            } else {
+                document.getElementById('login-page').style.display = 'flex';
+            }
+        });
+
+        async function callAPI(action, data = {}) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: action, data: data }), redirect: "follow"
+                });
+                return await response.json();
+            } catch (error) { 
+                return { success: false, message: "เชื่อมต่อฐานข้อมูลไม่ได้: " + error }; 
+            }
+        }
+
+        async function doLogin(btn) {
+            const email = document.getElementById('login-email').value.trim();
+            const pass = document.getElementById('login-pass').value;
+            const errEl = document.getElementById('login-error');
+
+            if(!email || !pass) {
+                errEl.innerText = "กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน";
+                errEl.classList.remove('hidden'); return;
+            }
+
+            btn.disabled = true;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner"></span> กำลังตรวจสอบ...';
+            errEl.classList.add('hidden');
+
+            const res = await callAPI("adminLogin", { email: email, password: pass });
+
+            if(res.success) {
+                currentStaff = res.staff;
+                localStorage.setItem('gooddayAdminSession', JSON.stringify(currentStaff));
+                showDashboard();
+            } else {
+                errEl.innerText = res.message;
+                errEl.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        function doLogout() {
+            localStorage.removeItem('gooddayAdminSession');
+            currentStaff = null;
+            location.reload();
+        }
+
+        function showDashboard() {
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('dashboard-page').classList.remove('hidden');
+            
+            // ใส่ข้อมูล Staff ที่ Navbar
+            document.getElementById('staff-name').innerText = currentStaff.name;
+            let roleDisplay = currentStaff.role === "Admin" ? "ส่วนกลาง (Admin)" : (currentStaff.role === "Regional_Head" ? "หัวหน้าภูมิภาค" : "ยุวทูตสุขภาพ");
+            document.getElementById('staff-role').innerText = roleDisplay + " | Scope: " + currentStaff.scope;
+
+            loadMembersData();
+        }
+
+        async function loadMembersData() {
+            const tbody = document.getElementById('member-table-body');
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-indigo-500 mb-2 block"></i> กำลังดึงข้อมูลจากระบบ...</td></tr>';
+            
+            const res = await callAPI("fetchMembersByRole", { role: currentStaff.role, scope: currentStaff.scope });
+            
+            if(res.success) {
+                allMembersData = res.members;
+                renderTable(allMembersData);
+                updateStats(allMembersData);
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-red-500 font-bold">❌ เกิดข้อผิดพลาด: ${res.message}</td></tr>`;
+            }
+        }
+
+        function renderTable(dataArray) {
+            const tbody = document.getElementById('member-table-body');
+            
+            if(dataArray.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-gray-500">ไม่พบข้อมูลสมาชิกในความดูแลของคุณ</td></tr>';
+                return;
+            }
+
+            let html = '';
+            dataArray.forEach(m => {
+                // จัดสี Status
+                let statusBadge = '';
+                if(m.wellProject === "ใช่") statusBadge = '<span class="px-3 py-1 inline-flex text-[10px] leading-5 font-bold rounded-full bg-green-100 text-green-800">เข้าร่วมแล้ว</span>';
+                else if(m.wellProject === "รอตั้งเป้าหมาย") statusBadge = '<span class="px-3 py-1 inline-flex text-[10px] leading-5 font-bold rounded-full bg-amber-100 text-amber-800">รอตั้งเป้าหมาย</span>';
+                else statusBadge = '<span class="px-3 py-1 inline-flex text-[10px] leading-5 font-semibold rounded-full bg-gray-100 text-gray-500">ยังไม่เข้าร่วม</span>';
+
+                html += `
+                <tr class="hover:bg-indigo-50 transition cursor-default">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-indigo-600">${m.memberId}</td>
+                    <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-bold text-gray-900">${m.name}</div><div class="text-[10px] text-gray-500">${m.email}</div></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><i class="fa-solid fa-phone text-gray-300 mr-1"></i> ${m.phone}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${m.province}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">${statusBadge}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <button onclick="viewDetails('${m.memberId}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition" title="ดูข้อมูลเชิงลึก"><i class="fa-solid fa-file-lines"></i></button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function updateStats(dataArray) {
+            document.getElementById('stat-total').innerText = dataArray.length;
+            let active = 0; let pending = 0;
+            dataArray.forEach(m => {
+                if(m.wellProject === "ใช่") active++;
+                else if(m.wellProject === "รอตั้งเป้าหมาย") pending++;
+            });
+            document.getElementById('stat-www').innerText = active;
+            document.getElementById('stat-pending').innerText = pending;
+        }
+
+        function filterTable() {
+            const keyword = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allMembersData.filter(m => 
+                m.name.toLowerCase().includes(keyword) || 
+                m.phone.includes(keyword) || 
+                m.memberId.toLowerCase().includes(keyword)
+            );
+            renderTable(filtered);
+        }
+
+        function viewDetails(memberId) {
+            // ในอนาคตสามารถเด้ง Popup โชว์ข้อมูลเจาะลึก (กราฟร่างกาย, ก้าวเดิน) ของคนนี้ได้
+            alert("ฟีเจอร์ดูข้อมูลเชิงลึกของ " + memberId + " (Coming Soon!)");
+        }
+    </script>
+</body>
+</html>
