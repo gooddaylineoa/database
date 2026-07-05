@@ -173,14 +173,32 @@
                         </div>
                     </div>
                     
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-                        <h3 class="font-bold text-gray-800 border-b pb-2 mb-3"><i class="fa-solid fa-ranking-star text-amber-500 mr-2"></i>Well Well Well!</h3>
-                        <div id="m-www-status" class="text-center py-4 bg-gray-50 rounded-lg text-gray-400 text-xs font-bold hidden">ไม่ได้เข้าร่วมโครงการ</div>
-                        <div id="m-www-data" class="hidden">
+                    <div id="m-www-data" class="hidden">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                                <div><p class="text-xs text-gray-500 font-bold mb-1">หมวดหมู่เป้าหมาย</p><p id="modal-goals" class="text-sm font-bold text-gray-800 bg-gray-50 p-2 rounded">-</p></div>
+                                <div><p class="text-xs text-gray-500 font-bold mb-1">หมวดหมู่เป้าหมาย</p><p id="modal-goals" class="text-sm font-bold text-gray-800 bg-gray-50 p-2 rounded border border-gray-100">-</p></div>
                                 <div><p class="text-xs text-gray-500 font-bold mb-1">เป้าหมายประจำเดือน</p><p id="modal-monthly-goal" class="text-sm font-bold text-amber-700 bg-amber-50 p-2 rounded border border-amber-100">-</p></div>
                             </div>
+
+                            <h4 class="text-xs font-bold text-gray-500 mt-4 mb-2 uppercase tracking-wider">สถานะการร่วมกิจกรรมย่อย</h4>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                                <div class="bg-blue-50 border border-blue-100 p-3 rounded-xl text-center">
+                                    <p class="text-[10px] text-blue-600 font-bold mb-1"><i class="fa-solid fa-weight-scale"></i> อัปเดต Omron</p>
+                                    <p id="trk-omron" class="text-xs font-black text-gray-800 mt-1">-</p>
+                                </div>
+                                <div class="bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-center">
+                                    <p class="text-[10px] text-emerald-600 font-bold mb-1"><i class="fa-solid fa-shoe-prints"></i> ก้าวเดิน (สะสม)</p>
+                                    <p id="trk-march" class="text-sm font-black text-emerald-700 mt-1">-</p>
+                                </div>
+                                <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-xl text-center">
+                                    <p class="text-[10px] text-indigo-600 font-bold mb-1"><i class="fa-solid fa-moon"></i> บันทึกการนอน</p>
+                                    <p id="trk-sleep" class="text-sm font-black text-indigo-700 mt-1">-</p>
+                                </div>
+                                <div class="bg-fuchsia-50 border border-fuchsia-100 p-3 rounded-xl text-center">
+                                    <p class="text-[10px] text-fuchsia-600 font-bold mb-1"><i class="fa-solid fa-star"></i> Recap เดือนนี้</p>
+                                    <p id="trk-recap" class="text-xs font-black mt-1">-</p>
+                                </div>
+                            </div>
+
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
                                 <div class="border border-gray-100 rounded-xl p-3 bg-gray-50">
                                     <p class="text-xs font-bold text-gray-500 text-center mb-2">น้ำหนัก (kg)</p>
@@ -395,21 +413,31 @@
                 }
 
                 // 4. ใส่ข้อมูล WWW
+                // 4. ใส่ข้อมูล WWW และ Activity Tracker
                 if (d.profile.wwwJoined !== "ไม่") {
                     document.getElementById('m-www-status').classList.add('hidden');
                     document.getElementById('m-www-data').classList.remove('hidden');
-                    document.getElementById('m-goals').innerText = d.www.goals || "-";
-                    document.getElementById('m-monthly-goal').innerText = d.www.monthlyGoal || "-";
+                    document.getElementById('modal-goals').innerText = d.www.goals || "-";
+                    document.getElementById('modal-monthly-goal').innerText = d.www.monthlyGoal || "-";
+                    
+                    // อัปเดตค่า Tracker เข้า Dashboard ย่อย
+                    document.getElementById('trk-omron').innerText = d.www.tracker.omronLastUpdate !== "-" ? `ล่าสุด ${d.www.tracker.omronLastUpdate}` : "ยังไม่อัปเดต";
+                    document.getElementById('trk-march').innerText = d.www.tracker.totalSteps > 0 ? `${d.www.tracker.totalSteps.toLocaleString()} ก้าว` : "ยังไม่มีข้อมูล";
+                    document.getElementById('trk-sleep').innerText = d.www.tracker.sleepCount > 0 ? `${d.www.tracker.sleepCount} วัน` : "ยังไม่มีข้อมูล";
+                    
+                    let recapEl = document.getElementById('trk-recap');
+                    recapEl.innerText = d.www.tracker.recapStatus;
+                    if(d.www.tracker.recapStatus.includes("✅")) {
+                        recapEl.className = "text-xs font-black mt-1 text-green-600";
+                    } else {
+                        recapEl.className = "text-xs font-black mt-1 text-red-500";
+                    }
+
                     renderAdminCharts(d.www.omronHistory);
                 } else {
                     document.getElementById('m-www-status').classList.remove('hidden');
                     document.getElementById('m-www-data').classList.add('hidden');
                 }
-                
-            } else {
-                alert("เกิดข้อผิดพลาดในการดึงข้อมูล: " + res.message);
-                closeInsightModal();
-            }
         }
 
         function closeInsightModal() {
