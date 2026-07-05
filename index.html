@@ -434,11 +434,16 @@
                     }
 
                     renderAdminCharts(d.www.omronHistory);
+                    } else {
+                        document.getElementById('m-www-status').classList.remove('hidden');
+                        document.getElementById('m-www-data').classList.add('hidden');
+                    }
+    
                 } else {
-                    document.getElementById('m-www-status').classList.remove('hidden');
-                    document.getElementById('m-www-data').classList.add('hidden');
+                    alert("ไม่พบข้อมูลสมาชิก: " + res.message);
                 }
-        }
+            }
+
 
         function closeInsightModal() {
             document.getElementById('insight-modal').classList.add('hidden');
