@@ -22,18 +22,18 @@
                 <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-white text-3xl mx-auto mb-4 backdrop-blur-sm">
                     <i class="fa-solid fa-user-shield"></i>
                 </div>
-                <h1 class="text-2xl font-bold text-white">Goodday Admin</h1>
-                <p class="text-indigo-200 text-sm mt-1">เข้าสู่ระบบสำหรับเจ้าหน้าที่โครงการ</p>
+                <h1 class="text-2xl font-bold text-white">Goodday Database</h1>
+                <p class="text-indigo-200 text-sm mt-1">เข้าสู่ระบบสำหรับผู้ดูแลโครงการ</p>
             </div>
             <div class="p-8">
                 <div class="space-y-4">
                     <div>
-                        <label class="text-xs font-bold text-gray-500 mb-1 block">รหัสประจำตัวเจ้าหน้าที่</label>
-                        <input type="text" id="login-id" class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-indigo-500 outline-none" placeholder="เช่น GD-10001 หรือ ADMIN-01">
+                        <label class="text-xs font-bold text-gray-500 mb-1 block">รหัสสมาชิก</label>
+                        <input type="text" id="login-id" class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-indigo-500 outline-none" placeholder="เช่น GD-10001">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-500 mb-1 block">รหัสผ่าน</label>
-                        <input type="password" id="login-pass" class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-indigo-500 outline-none" placeholder="••••••••">
+                        <input type="password" id="login-pass" class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-indigo-500 outline-none" placeholder="กรอกรหัสผ่าน">
                     </div>
                     <div id="login-error" class="bg-red-50 text-red-600 text-xs p-3 rounded-lg text-center font-bold hidden"></div>
                     <button onclick="doLogin(this)" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl font-bold shadow-md transition mt-2">
@@ -72,11 +72,16 @@
                     <h2 class="text-2xl font-black text-gray-800">รายชื่อผู้เข้าร่วมโครงการ</h2>
                     <p class="text-sm text-gray-500 mt-1">แสดงข้อมูลตามสิทธิ์การดูแลของคุณ</p>
                 </div>
-                <div class="relative max-w-sm w-full">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-search text-gray-400"></i>
+                <div class="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+                    <div class="relative w-full sm:w-80">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" id="search-input" onkeyup="filterTable()" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 sm:text-sm" placeholder="ค้นหาชื่อ, เบอร์โทร, รหัสสมาชิก...">
                     </div>
-                    <input type="text" id="search-input" onkeyup="filterTable()" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 sm:text-sm" placeholder="ค้นหาชื่อ, เบอร์โทร, หรือรหัสสมาชิก...">
+                    <button onclick="exportToCSV()" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition flex items-center justify-center whitespace-nowrap">
+                        <i class="fa-solid fa-file-excel mr-2"></i> โหลด Excel
+                    </button>
                 </div>
             </div>
 
@@ -366,6 +371,42 @@
 
             createChart('admin-chart-w', wData, '#4f46e5'); // สีกราฟน้ำหนัก (น้ำเงิน)
             createChart('admin-chart-f', fData, '#e11d48'); // สีกราฟไขมัน (แดง)
+        }
+
+        // ==========================================
+        // 📥 ดาวน์โหลดข้อมูลเป็น Excel (CSV)
+        // ==========================================
+        function exportToCSV() {
+            if(allMembersData.length === 0) {
+                alert("ไม่มีข้อมูลสำหรับดาวน์โหลด");
+                return;
+            }
+            
+            // 1. ใส่ BOM (\uFEFF) เพื่อให้ Excel อ่านภาษาไทยได้ไม่เป็นภาษาต่างดาว
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
+            
+            // 2. สร้างหัวคอลัมน์
+            csvContent += "Member ID,ชื่อ-นามสกุล,เบอร์โทรศัพท์,อีเมล,จังหวัด,สถานะโครงการ\n"; 
+            
+            // 3. วนลูปข้อมูลใส่ทีละบรรทัด
+            allMembersData.forEach(m => {
+                // ทริค: ใส่ ="..." ครอบเบอร์โทรไว้ เพื่อป้องกันไม่ให้ Excel ตัดเลข 0 ข้างหน้าทิ้ง
+                let row = `${m.memberId},${m.name},="${m.phone}",${m.email},${m.province},${m.wellProject}`;
+                csvContent += row + "\n";
+            });
+            
+            // 4. สั่งดาวน์โหลดลงเครื่อง
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            
+            // ตั้งชื่อไฟล์ที่จะเซฟ (ใช้วันที่ปัจจุบันมาต่อท้ายชื่อ)
+            let dateStr = new Date().toISOString().split('T')[0];
+            link.setAttribute("download", `Goodday_Report_${dateStr}.csv`);
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
