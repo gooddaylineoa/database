@@ -114,6 +114,17 @@
                 </div>
             </div>
 
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-800 border-b border-gray-100 pb-2 mb-4"><i class="fa-solid fa-chart-pie text-pink-500 mr-2"></i>สัดส่วนสมาชิกตามจังหวัด</h3>
+                    <div class="h-56 relative"><canvas id="prov-doughnut-chart"></canvas></div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-800 border-b border-gray-100 pb-2 mb-4"><i class="fa-solid fa-chart-column text-indigo-500 mr-2"></i>5 อันดับจังหวัดที่มีสมาชิกสูงสุด</h3>
+                    <div class="h-56 relative"><canvas id="prov-bar-chart"></canvas></div>
+                </div>
+            </div>
+
             <div class="bg-white shadow-md rounded-2xl overflow-hidden border border-gray-200">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -339,6 +350,7 @@
             if(res.success) {
                 allMembersData = res.members;
                 updateStats(allMembersData);
+                renderDashboardCharts(allMembersData);
                 applyFilters(); 
             } else {
                 tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-red-500 font-bold">❌ เกิดข้อผิดพลาด: ${res.message}</td></tr>`;
@@ -560,6 +572,71 @@
 
             createChart('admin-chart-w', wData, '#db2777'); 
             createChart('admin-chart-f', fData, '#e11d48'); 
+        }
+
+        // ==========================================
+        // 📊 วาดกราฟ Dashboard สถิติจังหวัด
+        // ==========================================
+        let dashChartsObj = {};
+
+        function renderDashboardCharts(dataArray) {
+            if(dataArray.length === 0) return;
+            
+            // 1. นับจำนวนคนตามจังหวัด
+            const provCount = {};
+            dataArray.forEach(m => {
+                let p = m.province && m.province !== "-" ? m.province.replace('จ.', '').trim() : "ไม่ระบุ";
+                provCount[p] = (provCount[p] || 0) + 1;
+            });
+
+            // 2. เรียงลำดับจังหวัดจากคนเยอะไปน้อย
+            const sortedProvs = Object.keys(provCount).sort((a,b) => provCount[b] - provCount[a]);
+            const labels = sortedProvs;
+            const values = sortedProvs.map(p => provCount[p]);
+
+            // ข้อมูลสำหรับ Top 5
+            const top5Labels = sortedProvs.slice(0, 5);
+            const top5Values = top5Labels.map(p => provCount[p]);
+
+            // ชุดสีสำหรับกราฟให้เข้ากับธีม
+            const colors = ['#db2777', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#6366f1', '#14b8a6', '#84cc16', '#eab308'];
+
+            // ฟังก์ชันช่วยสร้างกราฟ
+            function createChart(canvasId, type, lbls, vals, cArray) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                if(dashChartsObj[canvasId]) dashChartsObj[canvasId].destroy(); // ล้างกราฟเก่าก่อนวาดใหม่
+                
+                dashChartsObj[canvasId] = new Chart(ctx, {
+                    type: type,
+                    data: {
+                        labels: lbls,
+                        datasets: [{ 
+                            data: vals, 
+                            backgroundColor: cArray, 
+                            borderRadius: type === 'bar' ? 6 : 0, // กราฟแท่งให้ขอบมน
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { 
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { 
+                                display: type === 'doughnut', 
+                                position: 'right',
+                                labels: { font: { family: 'Sarabun', size: 10 } }
+                            } 
+                        },
+                        scales: type === 'bar' ? { 
+                            y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Sarabun' } } },
+                            x: { ticks: { font: { family: 'Sarabun' } } }
+                        } : {}
+                    }
+                });
+            }
+
+            // สั่งวาดกราฟทั้ง 2 ตัว
+            createChart('prov-doughnut-chart', 'doughnut', labels, values, colors);
+            createChart('prov-bar-chart', 'bar', top5Labels, top5Values, colors);
         }
 
         // ==========================================
