@@ -16,6 +16,9 @@
 </head>
 <body class="text-gray-800 antialiased">
 
+    <!-- ========================================== -->
+    <!-- 🔐 หน้า Login -->
+    <!-- ========================================== -->
     <div id="login-page" class="min-h-screen flex items-center justify-center p-4">
         <div class="bg-white max-w-md w-full rounded-2xl shadow-xl overflow-hidden">
             <div class="bg-pink-600 p-8 text-center">
@@ -44,6 +47,9 @@
         </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- 📊 หน้า Dashboard -->
+    <!-- ========================================== -->
     <div id="dashboard-page" class="hidden min-h-screen flex flex-col">
         <nav class="bg-pink-700 text-white shadow-md sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -67,17 +73,25 @@
 
         <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
             
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
                 <div>
                     <h2 class="text-2xl font-black text-gray-800">รายชื่อผู้เข้าร่วมโครงการ</h2>
                     <p class="text-sm text-gray-500 mt-1">แสดงข้อมูลตามสิทธิ์การดูแลของคุณ</p>
                 </div>
-                <div class="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
-                    <div class="relative w-full sm:w-80">
+                <div class="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
+                    <!-- Dropdown กรองสถานะ -->
+                    <select id="filter-www" onchange="applyFilters()" class="w-full sm:w-auto border border-gray-300 rounded-xl py-2.5 px-3 text-sm text-gray-600 focus:outline-none focus:border-pink-500 bg-white shadow-sm">
+                        <option value="all">สถานะ WWW ทั้งหมด</option>
+                        <option value="ใช่">✅ เข้าร่วมแล้ว</option>
+                        <option value="รอตั้งเป้าหมาย">⏳ รอตั้งเป้าหมาย</option>
+                        <option value="ไม่">❌ ยังไม่เข้าร่วม</option>
+                    </select>
+
+                    <div class="relative w-full sm:w-72">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-solid fa-search text-gray-400"></i>
                         </div>
-                        <input type="text" id="search-input" onkeyup="filterTable()" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:border-pink-500 sm:text-sm" placeholder="ค้นหาชื่อ, เบอร์โทร, รหัสสมาชิก...">
+                        <input type="text" id="search-input" onkeyup="applyFilters()" class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:border-pink-500 sm:text-sm shadow-sm" placeholder="ค้นหาชื่อ, รหัส, พื้นที่, จังหวัด...">
                     </div>
                     <button onclick="exportToCSV()" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition flex items-center justify-center whitespace-nowrap">
                         <i class="fa-solid fa-file-excel mr-2"></i> โหลด Excel
@@ -118,15 +132,27 @@
                         </tbody>
                     </table>
                 </div>
+                <!-- แถบแบ่งหน้า (Pagination) -->
+                <div class="bg-gray-50 px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+                    <span id="page-info" class="text-xs text-gray-500 font-medium">แสดง 0 ถึง 0 จาก 0 รายการ</span>
+                    <div class="flex gap-2">
+                        <button id="btn-prev" onclick="prevPage()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-50 transition">ก่อนหน้า</button>
+                        <button id="btn-next" onclick="nextPage()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-50 transition">ถัดไป</button>
+                    </div>
+                </div>
             </div>
         </main>
 
+        <!-- ========================================== -->
+        <!-- 🔍 Modal ข้อมูลเชิงลึก -->
+        <!-- ========================================== -->
         <div id="insight-modal" class="fixed inset-0 bg-gray-900 bg-opacity-60 z-[9999] hidden flex justify-center items-center p-4 backdrop-blur-sm">
             <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-[fadeInUp_0.3s_ease-out]">
                 <div class="bg-pink-700 px-6 py-4 flex justify-between items-center text-white">
                     <h2 class="text-lg font-bold"><i class="fa-solid fa-address-card mr-2"></i>แฟ้มประวัติสมาชิก: <span id="modal-member-id" class="text-pink-200"></span></h2>
                     <button onclick="closeInsightModal()" class="text-white hover:text-pink-200 text-2xl transition"><i class="fa-solid fa-xmark"></i></button>
                 </div>
+                <!-- min-h-0 ช่วยให้เลื่อนลงมาดูข้างล่างได้ -->
                 <div class="p-6 overflow-y-auto bg-gray-50 flex-1 min-h-0">
                     <div id="modal-loading" class="text-center py-20 hidden">
                         <i class="fa-solid fa-spinner fa-spin text-5xl text-pink-500 mb-4 block"></i>
@@ -223,12 +249,18 @@
         
     </div>
 
+    <!-- ========================================== -->
+    <!-- ⚙️ JavaScript ทำงานของระบบ -->
+    <!-- ========================================== -->
     <script>
-        // 🚨🚨🚨 เปลี่ยน URL ตรงนี้เป็น URL ของ Web App ใหม่ของระบบหลังบ้าน 🚨🚨🚨
+        // 🚨 อย่าลืมเปลี่ยน API_URL เป็นของใหม่ล่าสุดนะครับ 🚨
         const API_URL = "https://script.google.com/macros/s/AKfycbwPGR0J7K5yMYQfE5R6DzfNHQB9V4STEP3N15OJPqlq12WhsNf0mFJk1TWBAVmww7fP/exec"; 
         
         let currentStaff = null;
         let allMembersData = [];
+        let filteredData = []; 
+        let currentPage = 1;
+        const itemsPerPage = 50; 
 
         document.addEventListener("DOMContentLoaded", () => {
             const savedStaff = localStorage.getItem('gooddayAdminSession');
@@ -306,23 +338,71 @@
             
             if(res.success) {
                 allMembersData = res.members;
-                renderTable(allMembersData);
                 updateStats(allMembersData);
+                applyFilters(); 
             } else {
                 tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-red-500 font-bold">❌ เกิดข้อผิดพลาด: ${res.message}</td></tr>`;
             }
         }
 
-        function renderTable(dataArray) {
+        function updateStats(dataArray) {
+            document.getElementById('stat-total').innerText = dataArray.length;
+            let active = 0; let pending = 0;
+            dataArray.forEach(m => {
+                if(m.wellProject === "ใช่") active++;
+                else if(m.wellProject === "รอตั้งเป้าหมาย") pending++;
+            });
+            document.getElementById('stat-www').innerText = active;
+            document.getElementById('stat-pending').innerText = pending;
+        }
+
+        function applyFilters() {
+            const keyword = document.getElementById('search-input').value.trim().toLowerCase();
+            const statusFilter = document.getElementById('filter-www').value;
+
+            filteredData = allMembersData.filter(m => {
+                const name = (m.name || "").toLowerCase();
+                const phone = (m.phone || "").toLowerCase();
+                const memberId = (m.memberId || "").toLowerCase();
+                const district = (m.district || "").toLowerCase();
+                const province = (m.province || "").toLowerCase();
+                const zip = (m.zipCode || "").toString();
+                const status = m.wellProject || "ไม่";
+
+                const matchSearch = name.includes(keyword) || phone.includes(keyword) || 
+                                    memberId.includes(keyword) || district.includes(keyword) || 
+                                    province.includes(keyword) || zip.includes(keyword);
+                
+                const matchStatus = (statusFilter === "all") || (status === statusFilter);
+
+                return matchSearch && matchStatus;
+            });
+
+            currentPage = 1; 
+            renderTable();
+        }
+
+        function renderTable() {
             const tbody = document.getElementById('member-table-body');
+            const totalItems = filteredData.length;
             
-            if(dataArray.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-gray-500">ไม่พบข้อมูลสมาชิกในความดูแลของคุณ</td></tr>';
+            if(totalItems === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-gray-500">ไม่พบข้อมูลสมาชิกจากการค้นหา</td></tr>';
+                document.getElementById('page-info').innerText = "แสดง 0 ถึง 0 จาก 0 รายการ";
+                document.getElementById('btn-prev').disabled = true;
+                document.getElementById('btn-next').disabled = true;
                 return;
             }
 
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            
+            const startIdx = (currentPage - 1) * itemsPerPage;
+            const endIdx = Math.min(startIdx + itemsPerPage, totalItems);
+            const pageData = filteredData.slice(startIdx, endIdx);
+
             let html = '';
-            dataArray.forEach(m => {
+            pageData.forEach(m => {
                 let statusBadge = '';
                 if(m.wellProject === "ใช่") statusBadge = '<span class="px-3 py-1 inline-flex text-[10px] leading-5 font-bold rounded-full bg-green-100 text-green-800">เข้าร่วมแล้ว</span>';
                 else if(m.wellProject === "รอตั้งเป้าหมาย") statusBadge = '<span class="px-3 py-1 inline-flex text-[10px] leading-5 font-bold rounded-full bg-amber-100 text-amber-800">รอตั้งเป้าหมาย</span>';
@@ -343,30 +423,25 @@
                 </tr>`;
             });
             tbody.innerHTML = html;
+
+            document.getElementById('page-info').innerText = `แสดง ${startIdx + 1} ถึง ${endIdx} จาก ${totalItems} รายการ`;
+            document.getElementById('btn-prev').disabled = currentPage === 1;
+            document.getElementById('btn-next').disabled = currentPage === totalPages;
         }
 
-        function updateStats(dataArray) {
-            document.getElementById('stat-total').innerText = dataArray.length;
-            let active = 0; let pending = 0;
-            dataArray.forEach(m => {
-                if(m.wellProject === "ใช่") active++;
-                else if(m.wellProject === "รอตั้งเป้าหมาย") pending++;
-            });
-            document.getElementById('stat-www').innerText = active;
-            document.getElementById('stat-pending').innerText = pending;
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
         }
 
-        function filterTable() {
-            const keyword = document.getElementById('search-input').value.toLowerCase();
-            const filtered = allMembersData.filter(m => 
-                m.name.toLowerCase().includes(keyword) || 
-                m.phone.includes(keyword) || 
-                m.memberId.toLowerCase().includes(keyword) ||
-                (m.district && m.district.toLowerCase().includes(keyword)) ||
-                (m.province && m.province.toLowerCase().includes(keyword)) ||
-                (m.zipCode && m.zipCode.includes(keyword))
-            );
-            renderTable(filtered);
+        function nextPage() {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
+            }
         }
 
         let adminChartsObj = {};
@@ -385,14 +460,14 @@
                 const d = res.data;
                 document.getElementById('modal-content').classList.remove('hidden');
                 
-                // 1. ใส่ข้อมูลส่วนตัว
+                // 1. ข้อมูลส่วนตัว
                 document.getElementById('m-name').innerText = d.profile.name;
                 document.getElementById('m-phone').innerText = d.profile.phone;
                 document.getElementById('m-email').innerText = d.profile.email;
                 document.getElementById('m-line').innerText = d.profile.lineId;
                 document.getElementById('m-address').innerText = d.profile.address;
 
-                // 2. ใส่ข้อมูล Waste
+                // 2. Waste
                 if (d.profile.wasteJoined === "ใช่") {
                     document.getElementById('m-waste-status').classList.add('hidden');
                     document.getElementById('m-waste-data').classList.remove('hidden');
@@ -403,7 +478,7 @@
                     document.getElementById('m-waste-data').classList.add('hidden');
                 }
 
-                // 3. ใส่ข้อมูลสุขภาพ
+                // 3. Health
                 if (d.health) {
                     document.getElementById('m-health-status').classList.add('hidden');
                     document.getElementById('m-health-data').classList.remove('hidden');
@@ -416,14 +491,13 @@
                     document.getElementById('m-health-data').classList.add('hidden');
                 }
 
-                // 4. ใส่ข้อมูล WWW และ Activity Tracker แบบดักจับ Error
+                // 4. WWW & Tracker
                 if (d.profile.wwwJoined && d.profile.wwwJoined !== "ไม่") {
                     document.getElementById('m-www-status').classList.add('hidden');
                     document.getElementById('m-www-data').classList.remove('hidden');
                     document.getElementById('modal-goals').innerText = (d.www && d.www.goals) ? d.www.goals : "-";
                     document.getElementById('modal-monthly-goal').innerText = (d.www && d.www.monthlyGoal) ? d.www.monthlyGoal : "-";
                     
-                    // ตัวดักข้อมูล Tracker กันพัง
                     let tracker = (d.www && d.www.tracker) ? d.www.tracker : { omronLastUpdate: "-", totalSteps: 0, sleepCount: 0, recapStatus: "ไม่มีข้อมูล" };
                     
                     document.getElementById('trk-omron').innerText = tracker.omronLastUpdate !== "-" ? `ล่าสุด ${tracker.omronLastUpdate}` : "ยังไม่อัปเดต";
@@ -484,15 +558,16 @@
                 });
             }
 
-            createChart('admin-chart-w', wData, '#db2777'); // สี Pink-600 สำหรับน้ำหนัก
-            createChart('admin-chart-f', fData, '#e11d48'); // สี Red สำหรับไขมัน
+            createChart('admin-chart-w', wData, '#db2777'); 
+            createChart('admin-chart-f', fData, '#e11d48'); 
         }
 
         // ==========================================
         // 📥 ดาวน์โหลดข้อมูลเป็น Excel (CSV)
         // ==========================================
         function exportToCSV() {
-            if(allMembersData.length === 0) {
+            // โหลดข้อมูลเฉพาะที่ผ่านการค้นหา/กรอง เพื่อให้ Export ออกมาตรงกับหน้าจอ
+            if(filteredData.length === 0) {
                 alert("ไม่มีข้อมูลสำหรับดาวน์โหลด");
                 return;
             }
@@ -500,7 +575,7 @@
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
             csvContent += "Member ID,ชื่อ-นามสกุล,เบอร์โทรศัพท์,อีเมล,พื้นที่,สถานะโครงการ\n"; 
             
-            allMembersData.forEach(m => {
+            filteredData.forEach(m => {
                 let fullArea = `${m.district ? m.district + ' ' : ''}จ.${m.province} ${m.zipCode}`;
                 let row = `${m.memberId},${m.name},="${m.phone}",${m.email},${fullArea},${m.wellProject}`;
                 csvContent += row + "\n";
