@@ -121,37 +121,79 @@
             </div>
         </main>
         <div id="insight-modal" class="fixed inset-0 bg-gray-900 bg-opacity-60 z-[9999] hidden flex justify-center items-center p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-[fadeInUp_0.3s_ease-out]">
-            <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center text-white">
-                <h2 class="text-lg font-bold"><i class="fa-solid fa-chart-line mr-2"></i>ข้อมูลเชิงลึก: <span id="modal-member-name" class="text-indigo-200"></span></h2>
+        <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-[fadeInUp_0.3s_ease-out]">
+            <div class="bg-indigo-700 px-6 py-4 flex justify-between items-center text-white">
+                <h2 class="text-lg font-bold"><i class="fa-solid fa-address-card mr-2"></i>แฟ้มประวัติสมาชิก: <span id="modal-member-id" class="text-indigo-200"></span></h2>
                 <button onclick="closeInsightModal()" class="text-white hover:text-indigo-200 text-2xl transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="p-6 overflow-y-auto bg-gray-50 flex-1">
-                <div id="modal-loading" class="text-center py-12 hidden">
-                    <i class="fa-solid fa-spinner fa-spin text-4xl text-indigo-500 mb-4 block"></i>
-                    <p class="text-gray-500 font-bold">กำลังดึงข้อมูลจากฐานข้อมูล...</p>
+                <div id="modal-loading" class="text-center py-20 hidden">
+                    <i class="fa-solid fa-spinner fa-spin text-5xl text-indigo-500 mb-4 block"></i>
+                    <p class="text-gray-500 font-bold">กำลังเชื่อมต่อฐานข้อมูลแบบ Real-time...</p>
                 </div>
+                
                 <div id="modal-content" class="hidden space-y-6">
+                    
                     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-                        <h3 class="font-bold text-gray-800 border-b pb-2 mb-3"><i class="fa-solid fa-bullseye text-amber-500 mr-2"></i>เป้าหมายโครงการ</h3>
-                        <p class="text-xs text-gray-500 mb-1">หมวดหมู่ที่สนใจ:</p>
-                        <p id="modal-goals" class="text-sm font-bold text-gray-800 mb-4 leading-relaxed">-</p>
-                        <p class="text-xs text-gray-500 mb-1">เป้าหมายประจำเดือน:</p>
-                        <p id="modal-monthly-goal" class="text-sm font-bold text-indigo-800 bg-indigo-50 p-4 rounded-xl border border-indigo-100 leading-relaxed">-</p>
+                        <h3 class="font-bold text-gray-800 border-b pb-2 mb-3"><i class="fa-solid fa-user text-indigo-500 mr-2"></i>ข้อมูลส่วนตัว</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div><p class="text-gray-400 text-xs font-bold">ชื่อ-นามสกุล</p><p id="m-name" class="font-bold text-gray-800">-</p></div>
+                            <div><p class="text-gray-400 text-xs font-bold">เบอร์โทรศัพท์</p><p id="m-phone" class="font-bold text-gray-800">-</p></div>
+                            <div><p class="text-gray-400 text-xs font-bold">อีเมล</p><p id="m-email" class="font-bold text-gray-800">-</p></div>
+                            <div><p class="text-gray-400 text-xs font-bold">LINE ID</p><p id="m-line" class="font-bold text-gray-800">-</p></div>
+                            <div class="md:col-span-2"><p class="text-gray-400 text-xs font-bold">ที่อยู่</p><p id="m-address" class="font-bold text-gray-800 bg-gray-50 p-2 rounded mt-1 border border-gray-100">-</p></div>
+                        </div>
                     </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-                        <h3 class="font-bold text-gray-800 border-b pb-2 mb-4"><i class="fa-solid fa-weight-scale text-blue-500 mr-2"></i>ประวัติร่างกาย (Omron)</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="border border-gray-100 rounded-xl p-3 bg-gray-50">
-                                <p class="text-xs font-bold text-gray-500 text-center mb-2">น้ำหนัก (kg)</p>
-                                <div class="h-40 relative"><canvas id="admin-chart-w"></canvas></div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="font-bold text-gray-800 border-b pb-2 mb-3"><i class="fa-solid fa-recycle text-emerald-500 mr-2"></i>Waste for Wealth</h3>
+                            <div id="m-waste-status" class="text-center py-4 bg-gray-50 rounded-lg text-gray-400 text-xs font-bold hidden">ไม่ได้เข้าร่วมโครงการ</div>
+                            <div id="m-waste-data" class="flex justify-between items-center bg-emerald-50 p-4 rounded-xl border border-emerald-100 hidden">
+                                <div class="text-center w-1/2 border-r border-emerald-200">
+                                    <p class="text-[10px] text-emerald-600 font-bold uppercase">ยอดสะสม (บาท)</p>
+                                    <p id="m-waste-money" class="text-2xl font-black text-emerald-700">0.00</p>
+                                </div>
+                                <div class="text-center w-1/2">
+                                    <p class="text-[10px] text-orange-600 font-bold uppercase">คูปอง (สิทธิ์)</p>
+                                    <p id="m-waste-coupon" class="text-2xl font-black text-orange-500">0</p>
+                                </div>
                             </div>
-                            <div class="border border-gray-100 rounded-xl p-3 bg-gray-50">
-                                <p class="text-xs font-bold text-gray-500 text-center mb-2">เปอร์เซ็นต์ไขมัน (%)</p>
-                                <div class="h-40 relative"><canvas id="admin-chart-f"></canvas></div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="font-bold text-gray-800 border-b pb-2 mb-3"><i class="fa-solid fa-heart-pulse text-red-500 mr-2"></i>สมุดพกสุขภาพ (ล่าสุด)</h3>
+                            <div id="m-health-status" class="text-center py-4 bg-gray-50 rounded-lg text-gray-400 text-xs font-bold hidden">ยังไม่มีประวัติการตรวจ</div>
+                            <div id="m-health-data" class="grid grid-cols-2 gap-2 hidden text-sm">
+                                <div class="bg-red-50 p-2 rounded-lg border border-red-100 text-center"><p class="text-[10px] text-gray-500 font-bold">ความดันโลหิต</p><p id="m-health-bp" class="font-black text-red-700">-</p></div>
+                                <div class="bg-blue-50 p-2 rounded-lg border border-blue-100 text-center"><p class="text-[10px] text-gray-500 font-bold">รอบเอว (ซม.)</p><p id="m-health-waist" class="font-black text-blue-700">-</p></div>
+                                <div class="bg-green-50 p-2 rounded-lg border border-green-100 text-center"><p class="text-[10px] text-gray-500 font-bold">TDEE (Kcal)</p><p id="m-health-tdee" class="font-black text-green-700">-</p></div>
+                                <div class="bg-purple-50 p-2 rounded-lg border border-purple-100 text-center"><p class="text-[10px] text-gray-500 font-bold">CV Risk (%)</p><p id="m-health-cv" class="font-black text-purple-700">-</p></div>
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-800 border-b pb-2 mb-3"><i class="fa-solid fa-ranking-star text-amber-500 mr-2"></i>Well Well Well!</h3>
+                        <div id="m-www-status" class="text-center py-4 bg-gray-50 rounded-lg text-gray-400 text-xs font-bold hidden">ไม่ได้เข้าร่วมโครงการ</div>
+                        <div id="m-www-data" class="hidden">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                                <div><p class="text-xs text-gray-500 font-bold mb-1">หมวดหมู่เป้าหมาย</p><p id="modal-goals" class="text-sm font-bold text-gray-800 bg-gray-50 p-2 rounded">-</p></div>
+                                <div><p class="text-xs text-gray-500 font-bold mb-1">เป้าหมายประจำเดือน</p><p id="modal-monthly-goal" class="text-sm font-bold text-amber-700 bg-amber-50 p-2 rounded border border-amber-100">-</p></div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
+                                <div class="border border-gray-100 rounded-xl p-3 bg-gray-50">
+                                    <p class="text-xs font-bold text-gray-500 text-center mb-2">น้ำหนัก (kg)</p>
+                                    <div class="h-40 relative"><canvas id="admin-chart-w"></canvas></div>
+                                </div>
+                                <div class="border border-gray-100 rounded-xl p-3 bg-gray-50">
+                                    <p class="text-xs font-bold text-gray-500 text-center mb-2">เปอร์เซ็นต์ไขมัน (%)</p>
+                                    <div class="h-40 relative"><canvas id="admin-chart-f"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -308,27 +350,62 @@
         let adminChartsObj = {};
 
         async function viewDetails(memberId) {
-            // หาชื่อสมาชิกจากตารางที่โหลดมาแล้ว
-            const member = allMembersData.find(m => m.memberId === memberId);
-            document.getElementById('modal-member-name').innerText = member ? `${member.name} (${memberId})` : memberId;
-            
-            // เปิดหน้าต่าง Modal โหมดโหลดดิ้ง
+            document.getElementById('modal-member-id').innerText = memberId;
             document.getElementById('insight-modal').classList.remove('hidden');
             document.getElementById('insight-modal').classList.add('flex');
             document.getElementById('modal-content').classList.add('hidden');
             document.getElementById('modal-loading').classList.remove('hidden');
 
-            // ยิง API ไปหลังบ้าน
             const res = await callAPI("getMemberInsight", { memberId: memberId });
-            
             document.getElementById('modal-loading').classList.add('hidden');
             
             if(res.success) {
+                const d = res.data;
                 document.getElementById('modal-content').classList.remove('hidden');
-                document.getElementById('modal-goals').innerText = res.data.goals || "ยังไม่ได้เลือกหมวดหมู่";
-                document.getElementById('modal-monthly-goal').innerText = res.data.monthlyGoal || "ยังไม่มีการตั้งเป้าหมาย";
                 
-                renderAdminCharts(res.data.omronHistory);
+                // 1. ใส่ข้อมูลส่วนตัว
+                document.getElementById('m-name').innerText = d.profile.name;
+                document.getElementById('m-phone').innerText = d.profile.phone;
+                document.getElementById('m-email').innerText = d.profile.email;
+                document.getElementById('m-line').innerText = d.profile.lineId;
+                document.getElementById('m-address').innerText = d.profile.address;
+
+                // 2. ใส่ข้อมูล Waste
+                if (d.profile.wasteJoined === "ใช่") {
+                    document.getElementById('m-waste-status').classList.add('hidden');
+                    document.getElementById('m-waste-data').classList.remove('hidden');
+                    document.getElementById('m-waste-money').innerText = d.waste.totalAmount.toFixed(2);
+                    document.getElementById('m-waste-coupon').innerText = d.waste.availableCoupons;
+                } else {
+                    document.getElementById('m-waste-status').classList.remove('hidden');
+                    document.getElementById('m-waste-data').classList.add('hidden');
+                }
+
+                // 3. ใส่ข้อมูลสุขภาพ
+                if (d.health) {
+                    document.getElementById('m-health-status').classList.add('hidden');
+                    document.getElementById('m-health-data').classList.remove('hidden');
+                    document.getElementById('m-health-bp').innerText = d.health.bp || "-";
+                    document.getElementById('m-health-waist').innerText = d.health.waist || "-";
+                    document.getElementById('m-health-tdee').innerText = d.health.tdee || "-";
+                    document.getElementById('m-health-cv').innerText = d.health.cvRisk || "-";
+                } else {
+                    document.getElementById('m-health-status').classList.remove('hidden');
+                    document.getElementById('m-health-data').classList.add('hidden');
+                }
+
+                // 4. ใส่ข้อมูล WWW
+                if (d.profile.wwwJoined !== "ไม่") {
+                    document.getElementById('m-www-status').classList.add('hidden');
+                    document.getElementById('m-www-data').classList.remove('hidden');
+                    document.getElementById('m-goals').innerText = d.www.goals || "-";
+                    document.getElementById('m-monthly-goal').innerText = d.www.monthlyGoal || "-";
+                    renderAdminCharts(d.www.omronHistory);
+                } else {
+                    document.getElementById('m-www-status').classList.remove('hidden');
+                    document.getElementById('m-www-data').classList.add('hidden');
+                }
+                
             } else {
                 alert("เกิดข้อผิดพลาดในการดึงข้อมูล: " + res.message);
                 closeInsightModal();
