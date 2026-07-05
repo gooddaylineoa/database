@@ -27,8 +27,8 @@
             <div class="p-8">
                 <div class="space-y-4">
                     <div>
-                        <label class="text-xs font-bold text-gray-500 mb-1 block">อีเมลเจ้าหน้าที่</label>
-                        <input type="email" id="login-email" class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-indigo-500 outline-none" placeholder="admin@goodday.com">
+                        <label class="text-xs font-bold text-gray-500 mb-1 block">รหัสประจำตัวเจ้าหน้าที่</label>
+                        <input type="text" id="login-id" class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:border-indigo-500 outline-none" placeholder="เช่น GD-10001 หรือ ADMIN-01">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-500 mb-1 block">รหัสผ่าน</label>
@@ -118,7 +118,7 @@
 
     <script>
         // 🚨🚨🚨 เปลี่ยน URL ตรงนี้เป็น URL ของ Web App ใหม่ของระบบหลังบ้าน 🚨🚨🚨
-        const API_URL = "ใส่_URL_ของ_APPS_SCRIPT_ตรงนี้"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbwPGR0J7K5yMYQfE5R6DzfNHQB9V4STEP3N15OJPqlq12WhsNf0mFJk1TWBAVmww7fP/exec"; 
         
         let currentStaff = null;
         let allMembersData = [];
@@ -147,12 +147,13 @@
         }
 
         async function doLogin(btn) {
-            const email = document.getElementById('login-email').value.trim();
+            // เปลี่ยนมาดึงค่าจาก login-id แทน login-email
+            const loginId = document.getElementById('login-id').value.trim();
             const pass = document.getElementById('login-pass').value;
             const errEl = document.getElementById('login-error');
 
-            if(!email || !pass) {
-                errEl.innerText = "กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน";
+            if(!loginId || !pass) {
+                errEl.innerText = "กรุณากรอกรหัสเจ้าหน้าที่และรหัสผ่านให้ครบถ้วน";
                 errEl.classList.remove('hidden'); return;
             }
 
@@ -161,7 +162,8 @@
             btn.innerHTML = '<span class="spinner"></span> กำลังตรวจสอบ...';
             errEl.classList.add('hidden');
 
-            const res = await callAPI("adminLogin", { email: email, password: pass });
+            // ส่งข้อมูลไปหลังบ้าน โดยส่งคีย์ id แทน email
+            const res = await callAPI("adminLogin", { id: loginId, password: pass });
 
             if(res.success) {
                 currentStaff = res.staff;
