@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goodday Admin Portal</title>
+    <title>Goodday Database</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
@@ -114,6 +115,43 @@
                 </div>
             </div>
         </main>
+        <div id="insight-modal" class="fixed inset-0 bg-gray-900 bg-opacity-60 z-[9999] hidden flex justify-center items-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-[fadeInUp_0.3s_ease-out]">
+            <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center text-white">
+                <h2 class="text-lg font-bold"><i class="fa-solid fa-chart-line mr-2"></i>ข้อมูลเชิงลึก: <span id="modal-member-name" class="text-indigo-200"></span></h2>
+                <button onclick="closeInsightModal()" class="text-white hover:text-indigo-200 text-2xl transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto bg-gray-50 flex-1">
+                <div id="modal-loading" class="text-center py-12 hidden">
+                    <i class="fa-solid fa-spinner fa-spin text-4xl text-indigo-500 mb-4 block"></i>
+                    <p class="text-gray-500 font-bold">กำลังดึงข้อมูลจากฐานข้อมูล...</p>
+                </div>
+                <div id="modal-content" class="hidden space-y-6">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-800 border-b pb-2 mb-3"><i class="fa-solid fa-bullseye text-amber-500 mr-2"></i>เป้าหมายโครงการ</h3>
+                        <p class="text-xs text-gray-500 mb-1">หมวดหมู่ที่สนใจ:</p>
+                        <p id="modal-goals" class="text-sm font-bold text-gray-800 mb-4 leading-relaxed">-</p>
+                        <p class="text-xs text-gray-500 mb-1">เป้าหมายประจำเดือน:</p>
+                        <p id="modal-monthly-goal" class="text-sm font-bold text-indigo-800 bg-indigo-50 p-4 rounded-xl border border-indigo-100 leading-relaxed">-</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-800 border-b pb-2 mb-4"><i class="fa-solid fa-weight-scale text-blue-500 mr-2"></i>ประวัติร่างกาย (Omron)</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="border border-gray-100 rounded-xl p-3 bg-gray-50">
+                                <p class="text-xs font-bold text-gray-500 text-center mb-2">น้ำหนัก (kg)</p>
+                                <div class="h-40 relative"><canvas id="admin-chart-w"></canvas></div>
+                            </div>
+                            <div class="border border-gray-100 rounded-xl p-3 bg-gray-50">
+                                <p class="text-xs font-bold text-gray-500 text-center mb-2">เปอร์เซ็นต์ไขมัน (%)</p>
+                                <div class="h-40 relative"><canvas id="admin-chart-f"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        
     </div>
 
     <script>
@@ -262,9 +300,72 @@
             renderTable(filtered);
         }
 
-        function viewDetails(memberId) {
-            // ในอนาคตสามารถเด้ง Popup โชว์ข้อมูลเจาะลึก (กราฟร่างกาย, ก้าวเดิน) ของคนนี้ได้
-            alert("ฟีเจอร์ดูข้อมูลเชิงลึกของ " + memberId + " (Coming Soon!)");
+        let adminChartsObj = {};
+
+        async function viewDetails(memberId) {
+            // หาชื่อสมาชิกจากตารางที่โหลดมาแล้ว
+            const member = allMembersData.find(m => m.memberId === memberId);
+            document.getElementById('modal-member-name').innerText = member ? `${member.name} (${memberId})` : memberId;
+            
+            // เปิดหน้าต่าง Modal โหมดโหลดดิ้ง
+            document.getElementById('insight-modal').classList.remove('hidden');
+            document.getElementById('insight-modal').classList.add('flex');
+            document.getElementById('modal-content').classList.add('hidden');
+            document.getElementById('modal-loading').classList.remove('hidden');
+
+            // ยิง API ไปหลังบ้าน
+            const res = await callAPI("getMemberInsight", { memberId: memberId });
+            
+            document.getElementById('modal-loading').classList.add('hidden');
+            
+            if(res.success) {
+                document.getElementById('modal-content').classList.remove('hidden');
+                document.getElementById('modal-goals').innerText = res.data.goals || "ยังไม่ได้เลือกหมวดหมู่";
+                document.getElementById('modal-monthly-goal').innerText = res.data.monthlyGoal || "ยังไม่มีการตั้งเป้าหมาย";
+                
+                renderAdminCharts(res.data.omronHistory);
+            } else {
+                alert("เกิดข้อผิดพลาดในการดึงข้อมูล: " + res.message);
+                closeInsightModal();
+            }
+        }
+
+        function closeInsightModal() {
+            document.getElementById('insight-modal').classList.add('hidden');
+            document.getElementById('insight-modal').classList.remove('flex');
+        }
+
+        function renderAdminCharts(historyData) {
+            if(!historyData || historyData.length === 0) return; // ถ้าไม่มีข้อมูลก็ไม่วาดกราฟ
+            
+            const labels = historyData.map(d => d.date);
+            const wData = historyData.map(d => d.weight);
+            const fData = historyData.map(d => d.fat);
+
+            // ฟังก์ชันวาดกราฟขนาดจิ๋ว
+            function createChart(canvasId, dataArr, colorStr) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                if(adminChartsObj[canvasId]) adminChartsObj[canvasId].destroy(); // ล้างกราฟเก่าออกก่อน
+                
+                adminChartsObj[canvasId] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{ 
+                            data: dataArr, borderColor: colorStr, backgroundColor: colorStr, 
+                            borderWidth: 2, tension: 0.3, pointRadius: 4, pointHoverRadius: 6 
+                        }]
+                    },
+                    options: { 
+                        responsive: true, maintainAspectRatio: false, 
+                        plugins: { legend: { display: false } }, 
+                        scales: { x: { ticks: { font: { size: 10 } } } } 
+                    }
+                });
+            }
+
+            createChart('admin-chart-w', wData, '#4f46e5'); // สีกราฟน้ำหนัก (น้ำเงิน)
+            createChart('admin-chart-f', fData, '#e11d48'); // สีกราฟไขมัน (แดง)
         }
     </script>
 </body>
